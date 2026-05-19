@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIPHER // Crypto Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020508;
+    --bg2: #050d14;
+    --panel: #070f18;
+    --border: #0a2a3a;
+    --accent: #00ffe5;
+    --accent2: #ff6b00;
+    --accent3: #7fff00;
+    --red: #ff2244;
+    --text: #a8c8d8;
+    --text-dim: #3a6070;
+    --text-bright: #e0f4ff;
+    --glow: 0 0 20px rgba(0,255,229,0.25);
+    --glow-strong: 0 0 40px rgba(0,255,229,0.5);
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-display: 'Orbitron', sans-serif;
+    --font-body: 'Rajdhani', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* ── SCANLINES ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,255,229,0.015) 2px,
+      rgba(0,255,229,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── GRID BG ── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,229,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,229,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── BOOT SCREEN ── */
+  #boot {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 60px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--accent);
+    animation: bootFade 0.5s ease 3.5s forwards;
+  }
+
+  @keyframes bootFade { to { opacity: 0; pointer-events: none; } }
+
+  .boot-line {
+    opacity: 0;
+    transform: translateY(4px);
+    animation: bootLine 0.3s ease forwards;
+  }
+  .boot-line:nth-child(1) { animation-delay: 0.1s; }
+  .boot-line:nth-child(2) { animation-delay: 0.4s; }
+  .boot-line:nth-child(3) { animation-delay: 0.7s; }
+  .boot-line:nth-child(4) { animation-delay: 1.0s; }
+  .boot-line:nth-child(5) { animation-delay: 1.3s; }
+  .boot-line:nth-child(6) { animation-delay: 1.6s; color: var(--accent3); }
+  .boot-line:nth-child(7) { animation-delay: 1.9s; color: var(--accent2); }
+  .boot-line:nth-child(8) { animation-delay: 2.4s; color: var(--text-bright); font-size: 18px; }
+
+  @keyframes bootLine {
+    to { opacity: 1; transform: none; }
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    background: rgba(2,5,8,0.9);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+  }
+
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-shadow: var(--glow);
+  }
+
+  .nav-logo span { color: var(--accent2); }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    transition: color 0.2s;
+    position: relative;
+  }
+
+  .nav-links a::before {
+    content: '> ';
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+  .nav-links a:hover::before { opacity: 1; }
+
+  .nav-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--accent3);
+  }
+
+  .pulse-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent3);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--accent3); }
+    50% { opacity: 0.4; box-shadow: none; }
+  }
+
+  /* ── TICKER ── */
+  .ticker-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 500;
+    background: rgba(5,13,20,0.95);
+    border-top: 1px solid var(--border);
+    padding: 8px 0;
+    overflow: hidden;
+  }
+
+  .ticker-inner {
+    display: flex;
+    gap: 60px;
+    animation: tickerScroll 30s linear infinite;
+    white-space: nowrap;
+  }
+
+  @keyframes tickerScroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+  }
+
+  .ticker-sym { color: var(--accent); font-weight: bold; }
+  .ticker-price { color: var(--text-bright); }
+  .ticker-up { color: var(--accent3); }
+  .ticker-down { color: var(--red); }
+
+  /* ── MAIN ── */
+  main {
+    position: relative;
+    z-index: 1;
+    padding-top: 80px;
+    padding-bottom: 60px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg-chart {
+    position: absolute;
+    right: 0; bottom: 0;
+    width: 55%;
+    height: 70%;
+    opacity: 0.06;
+    pointer-events: none;
+  }
+
+  .hero-tag {
+    font-size: 11px;
+    letter-spacing: 5px;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 4s forwards;
+  }
+
+  .hero-codename {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 8vw, 100px);
+    font-weight: 900;
+    color: var(--text-bright);
+    line-height: 0.9;
+    letter-spacing: -2px;
+    margin-bottom: 16px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 4.1s forwards;
+  }
+
+  .hero-codename .accent { color: var(--accent); text-shadow: var(--glow-strong); }
+  .hero-codename .dim { color: var(--text-dim); }
+
+  .hero-sub {
+    font-family: var(--font-body);
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--text);
+    letter-spacing: 2px;
+    margin-bottom: 40px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 4.2s forwards;
+  }
+
+  .hero-meta {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 0;
+    max-width: 640px;
+    border: 1px solid var(--border);
+    opacity: 0;
+    animation: fadeUp 0.6s ease 4.3s forwards;
+  }
+
+  .hero-meta-item {
+    padding: 16px 24px;
+    border-right: 1px solid var(--border);
+  }
+  .hero-meta-item:last-child { border-right: none; }
+
+  .meta-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .meta-value {
+    font-family: var(--font-display);
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 40px;
+    padding: 14px 28px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 4.4s forwards;
+    width: fit-content;
+  }
+
+  .hero-cta:hover {
+    background: var(--accent);
+    color: var(--bg);
+    box-shadow: var(--glow-strong);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* ── SECTIONS ── */
+  section {
+    padding: 80px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 60px;
+  }
+
+  .section-num {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent2);
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+
+  /* ── MARKET PANEL ── */
+  .market-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .coin-card {
+    background: var(--panel);
+    padding: 28px;
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .coin-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+
+  .coin-card:hover { background: #0a1520; }
+  .coin-card:hover::before { transform: scaleX(1); }
+
+  .coin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .coin-sym {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .coin-name {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .coin-badge {
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 4px 8px;
+    border: 1px solid;
+    text-transform: uppercase;
+  }
+
+  .badge-up { border-color: var(--accent3); color: var(--accent3); }
+  .badge-dn { border-color: var(--red); color: var(--red); }
+
+  .coin-price {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 6px;
+  }
+
+  .coin-change-up { font-size: 13px; color: var(--accent3); }
+  .coin-change-dn { font-size: 13px; color: var(--red); }
+
+  .coin-bar-wrap {
+    margin-top: 20px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .coin-bar {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    animation: barLoad 1.5s ease forwards;
+    transform-origin: left;
+    transform: scaleX(0);
+  }
+
+  @keyframes barLoad { to { transform: scaleX(1); } }
+
+  /* ── MINI CHART ── */
+  .coin-spark {
+    margin-top: 16px;
+    height: 50px;
+  }
+
+  /* ── INTEL SECTION ── */
+  .intel-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .intel-card {
+    background: var(--panel);
+    padding: 36px;
+  }
+
+  .intel-label {
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .intel-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 12px;
+  }
+
+  .intel-body {
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .intel-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .tag {
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    color: var(--accent);
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .tag:hover { border-color: var(--accent); background: rgba(0,255,229,0.05); }
+
+  /* ── SIGNAL TABLE ── */
+  .signal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .signal-table th {
+    text-align: left;
+    padding: 12px 20px;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+
+  .signal-table td {
+    padding: 18px 20px;
+    border-bottom: 1px solid rgba(10,42,58,0.5);
+    transition: background 0.2s;
+  }
+
+  .signal-table tr:hover td { background: rgba(0,255,229,0.03); }
+
+  .signal-asset { color: var(--accent); font-family: var(--font-display); font-size: 14px; }
+  .signal-action-buy { color: var(--accent3); }
+  .signal-action-sell { color: var(--red); }
+  .signal-action-hold { color: var(--accent2); }
+
+  .conf-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .conf-fill {
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    min-width: 30px;
+  }
+
+  /* ── STATS ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 60px;
+  }
+
+  .stat-box {
+    background: var(--panel);
+    padding: 40px 30px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 42px;
+    font-weight: 900;
+    color: var(--accent);
+    text-shadow: var(--glow);
+    display: block;
+  }
+
+  .stat-unit {
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--accent2);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-top: 10px;
+  }
+
+  /* ── SERVICES ── */
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .service-card {
+    background: var(--panel);
+    padding: 40px 32px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+
+  .service-card:hover { background: #0a1520; }
+
+  .service-icon {
+    font-size: 32px;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  .service-cat {
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .service-name {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 16px;
+  }
+
+  .service-desc {
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    margin-bottom: 24px;
+  }
+
+  .service-price {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .service-price-sub {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: 2px;
+  }
+
+  .service-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-decoration: none;
+    text-transform: uppercase;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+
+  .service-link:hover { border-color: var(--accent); }
+
+  /* ── CONTACT ── */
+  .contact-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+  }
+
+  .contact-info p {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .contact-channels {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  .channel-link {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    transition: all 0.2s;
+    color: var(--text);
+  }
+
+  .channel-link:hover {
+    border-color: var(--accent);
+    background: rgba(0,255,229,0.04);
+    color: var(--text-bright);
+  }
+
+  .channel-icon { font-size: 20px; }
+
+  .channel-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .channel-handle {
+    font-size: 13px;
+    color: var(--accent);
+    margin-left: auto;
+    font-family: var(--font-mono);
+  }
+
+  /* ── TERMINAL BLOCK ── */
+  .terminal {
+    background: #020b10;
+    border: 1px solid var(--border);
+    padding: 28px;
+    font-size: 13px;
+    line-height: 2;
+  }
+
+  .term-prompt { color: var(--accent); }
+  .term-cmd { color: var(--text-bright); }
+  .term-out { color: var(--text); padding-left: 16px; }
+  .term-warn { color: var(--accent2); padding-left: 16px; }
+  .term-ok { color: var(--accent3); padding-left: 16px; }
+  .term-cursor {
+    display: inline-block;
+    width: 10px; height: 2px;
+    background: var(--accent);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-ref { letter-spacing: 2px; }
+
+  /* ── GLITCH EFFECT ── */
+  .glitch {
+    position: relative;
+  }
+
+  .glitch::before,
+  .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .glitch::before {
+    color: var(--accent);
+    animation: glitch1 3s infinite;
+    clip-path: polygon(0 20%, 100% 20%, 100% 40%, 0 40%);
+  }
+
+  .glitch::after {
+    color: var(--red);
+    animation: glitch2 3s infinite;
+    clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%);
+  }
+
+  @keyframes glitch1 {
+    0%, 95%, 100% { transform: none; }
+    96% { transform: translate(-3px, 1px); }
+    97% { transform: translate(3px, -1px); }
+    98% { transform: translate(-3px, 0); }
+  }
+
+  @keyframes glitch2 {
+    0%, 93%, 100% { transform: none; }
+    94% { transform: translate(3px, 2px); }
+    95% { transform: translate(-3px, -1px); }
+    96% { transform: translate(2px, 0); }
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 60px;
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 10px;
+    letter-spacing: 4px;
+  }
+
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .hero { padding: 0 24px; }
+    section { padding: 60px 24px; }
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    .intel-grid, .services-grid, .stats-row { grid-template-columns: 1fr; }
+    .contact-wrap { grid-template-columns: 1fr; }
+    .hero-meta { grid-template-columns: 1fr 1fr; }
+    footer { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- BOOT SCREEN -->
+<div id="boot">
+  <div class="boot-line">> INITIALIZING CIPHER PROTOCOL v7.3.1...</div>
+  <div class="boot-line">> CONNECTING TO BLOCKCHAIN NODES... OK</div>
+  <div class="boot-line">> DECRYPTING MARKET INTELLIGENCE... OK</div>
+  <div class="boot-line">> ESTABLISHING SECURE CHANNEL... OK</div>
+  <div class="boot-line">> LOADING OPERATIVE PROFILE...</div>
+  <div class="boot-line">> ACCESS GRANTED. WELCOME, OPERATIVE.</div>
+  <div class="boot-line">> WARNING: ALL TRANSACTIONS MONITORED</div>
+  <div class="boot-line">> CIPHER-2147-ALPHA // BLOCKCHAIN INTELLIGENCE DIVISION</div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">CIPHER<span>//</span>CRYPTO</div>
+  <ul class="nav-links">
+    <li><a href="#markets">[MARKETS]</a></li>
+    <li><a href="#intel">[INTEL]</a></li>
+    <li><a href="#signals">[SIGNALS]</a></li>
+    <li><a href="#services">[SERVICES]</a></li>
+    <li><a href="#contact">[CONTACT]</a></li>
+  </ul>
+  <div class="nav-status">
+    <div class="pulse-dot"></div>
+    CHAIN: LIVE
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker-bar">
+  <div class="ticker-inner" id="tickerInner">
+    <!-- JS filled -->
+  </div>
+</div>
+
+<!-- MAIN -->
+<main>
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <svg class="hero-bg-chart" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="0,250 60,200 120,220 180,140 240,170 300,80 360,110 420,60 480,90 540,30 600,50" stroke="#00ffe5" stroke-width="2" fill="none"/>
+      <polyline points="0,250 60,200 120,220 180,140 240,170 300,80 360,110 420,60 480,90 540,30 600,50 600,300 0,300" fill="url(#heroGrad)" opacity="0.5"/>
+      <defs>
+        <linearGradient id="heroGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#00ffe5" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="#00ffe5" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <div class="hero-tag">// BLOCKCHAIN INTELLIGENCE DIVISION — FILE: CIPHER-2147-ALPHA</div>
+    <div class="hero-codename glitch" data-text="CIPHER">
+      <span class="dim">CIPHER</span><br>
+      <span class="accent">PROTOCOL</span>
+    </div>
+    <div class="hero-sub">DECENTRALIZED INTELLIGENCE // MARKET OPERATIONS // CHAIN ANALYSIS</div>
+
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <div class="meta-label">Status</div>
+        <div class="meta-value">ACTIVE</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="meta-label">Clearance</div>
+        <div class="meta-value">LEVEL 5</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="meta-label">Chains</div>
+        <div class="meta-value">12+</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="meta-label">File ID</div>
+        <div class="meta-value">2147-Α</div>
+      </div>
+    </div>
+
+    <a href="#markets" class="hero-cta">► ACCESS INTELLIGENCE</a>
+  </section>
+
+  <div class="divider">// MARKET INTELLIGENCE FEED //</div>
+
+  <!-- MARKETS -->
+  <section id="markets">
+    <div class="section-header">
+      <span class="section-num">[01]</span>
+      <span class="section-title">MARKET INTELLIGENCE</span>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="market-grid" id="marketGrid">
+      <!-- JS filled -->
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box">
+        <span class="stat-num" id="statMcap">—</span>
+        <div class="stat-label">Total Market Cap (USD)</div>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num">12<span class="stat-unit">+</span></span>
+        <div class="stat-label">Monitored Chains</div>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num">99.9<span class="stat-unit">%</span></span>
+        <div class="stat-label">Signal Accuracy</div>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num">24/7</span>
+        <div class="stat-label">Operative Status</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider">// OPERATIVE INTELLIGENCE //</div>
+
+  <!-- INTEL -->
+  <section id="intel">
+    <div class="section-header">
+      <span class="section-num">[02]</span>
+      <span class="section-title">OPERATIVE BRIEF</span>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="intel-grid">
+      <div class="intel-card">
+        <div class="intel-label">// PRIMARY DIRECTIVE</div>
+        <div class="intel-title">On-Chain Intelligence</div>
+        <div class="intel-body">
+          Subject specializes in deep blockchain forensics — tracking wallet clusters, tracing capital flows across L1 and L2 networks, and identifying accumulation patterns before they surface in price action. Threat assessment: EXTREME.
+        </div>
+        <div class="intel-tags">
+          <span class="tag">Ethereum</span>
+          <span class="tag">Solana</span>
+          <span class="tag">Bitcoin</span>
+          <span class="tag">Arbitrum</span>
+          <span class="tag">Base</span>
+        </div>
+      </div>
+
+      <div class="intel-card">
+        <div class="intel-label">// SECONDARY DIRECTIVE</div>
+        <div class="intel-title">DeFi Protocol Analysis</div>
+        <div class="intel-body">
+          Deep-cover infiltration of DeFi ecosystems. Yield optimization, liquidity pool mechanics, impermanent loss modeling, and MEV detection. Operationalizes arbitrage vectors invisible to standard-clearance agents.
+        </div>
+        <div class="intel-tags">
+          <span class="tag">Uniswap</span>
+          <span class="tag">Aave</span>
+          <span class="tag">Curve</span>
+          <span class="tag">GMX</span>
+          <span class="tag">MEV</span>
+        </div>
+      </div>
+
+      <div class="intel-card">
+        <div class="intel-label">// TERTIARY VECTOR</div>
+        <div class="intel-title">Derivatives & Futures</div>
+        <div class="intel-body">
+          Covert operations across perpetual futures markets. Funding rate arbitrage, liquidation cascade prediction, and open interest surveillance across Binance, Bybit, and dYdX. Liquidation heatmaps classified.
+        </div>
+        <div class="intel-tags">
+          <span class="tag">Perps</span>
+          <span class="tag">Options</span>
+          <span class="tag">Funding Rates</span>
+          <span class="tag">dYdX</span>
+        </div>
+      </div>
+
+      <div class="intel-card">
+        <div class="intel-label">// COVERT ASSET</div>
+        <div class="intel-title">Wallet Tracking & Alerts</div>
+        <div class="intel-body">
+          Surveillance of whale wallets and smart-money addresses. Automated alerts on large transfers, token unlocks, and exchange inflows. Dark pool activity detection. Field operatives notified in real-time.
+        </div>
+        <div class="intel-tags">
+          <span class="tag">Whale Alerts</span>
+          <span class="tag">Token Unlocks</span>
+          <span class="tag">Exchange Flows</span>
+          <span class="tag">Smart Money</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider">// ACTIVE SIGNAL FEED //</div>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="section-header">
+      <span class="section-num">[03]</span>
+      <span class="section-title">ACTIVE SIGNALS</span>
+      <div class="section-line"></div>
+    </div>
+
+    <table class="signal-table">
+      <thead>
+        <tr>
+          <th>ASSET</th>
+          <th>ACTION</th>
+          <th>ENTRY</th>
+          <th>TARGET</th>
+          <th>STOP</th>
+          <th>CONFIDENCE</th>
+          <th>STATUS</th>
+        </tr>
+      </thead>
+      <tbody id="signalBody">
+        <!-- JS filled -->
+      </tbody>
+    </table>
+  </section>
+
+  <div class="divider">// AVAILABLE CONTRACTS //</div>
+
+  <!-- SERVICES -->
+  <section id="services">
+    <div class="section-header">
+      <span class="section-num">[04]</span>
+      <span class="section-title">MISSION CATALOG</span>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="services-grid">
+      <div class="service-card">
+        <span class="service-icon">⛓</span>
+        <div class="service-cat">// INTELLIGENCE</div>
+        <div class="service-name">On-Chain Research Report</div>
+        <div class="service-desc">
+          Deep-dive wallet analysis, token flow mapping, and smart money identification. Delivered as classified PDF dossier with annotated transaction graphs.
+        </div>
+        <div class="service-price">from $200</div>
+        <div class="service-price-sub">PER DOSSIER // CRYPTO PREFERRED</div>
+        <a href="#contact" class="service-link">► INITIATE MISSION</a>
+      </div>
+
+      <div class="service-card">
+        <span class="service-icon">📡</span>
+        <div class="service-cat">// SIGNALS</div>
+        <div class="service-name">Private Signal Channel</div>
+        <div class="service-desc">
+          Real-time entry/exit signals on spot and perpetuals. Includes whale wallet alerts, liquidation level maps, and funding rate anomaly notifications.
+        </div>
+        <div class="service-price">from $99</div>
+        <div class="service-price-sub">PER MONTH // ENCRYPTED CHANNEL</div>
+        <a href="#contact" class="service-link">► INITIATE MISSION</a>
+      </div>
+
+      <div class="service-card">
+        <span class="service-icon">🤖</span>
+        <div class="service-cat">// AUTOMATION</div>
+        <div class="service-name">Trading Bot Development</div>
+        <div class="service-desc">
+          Custom algorithmic trading bots. Grid, DCA, momentum, and arbitrage strategies. Deployable on Binance, Bybit, or self-hosted nodes. Full source code delivered.
+        </div>
+        <div class="service-price">from $350</div>
+        <div class="service-price-sub">PER BOT // SOURCE INCLUDED</div>
+        <a href="#contact" class="service-link">► INITIATE MISSION</a>
+      </div>
+    </div>
+
+    <div class="terminal" style="margin-top: 2px;">
+      <div><span class="term-prompt">&gt; </span><span class="term-cmd">cat MISSION_PARAMETERS.txt</span></div>
+      <div class="term-out">All contracts negotiated via secure channels. Prices listed are base estimates.</div>
+      <div class="term-out">Final cost depends on scope, chain complexity, and urgency classification.</div>
+      <div class="term-warn">⚠ Payment accepted in BTC, ETH, USDT, or USDC.</div>
+      <div class="term-ok">✓ Response time: &lt; 12H. Revisions included. NDA available on request.</div>
+      <div><span class="term-prompt">&gt; </span><span class="term-cmd">_</span><span class="term-cursor"></span></div>
+    </div>
+  </section>
+
+  <div class="divider">// SECURE CHANNELS //</div>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="section-header">
+      <span class="section-num">[05]</span>
+      <span class="section-title">ESTABLISH CONTACT</span>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="contact-wrap">
+      <div class="contact-info">
+        <div class="intel-label" style="margin-bottom:16px;">// OPERATIVE STATUS: ACCEPTING MISSIONS</div>
+        <p>
+          All communications are encrypted end-to-end. Identify your target objective and preferred chain before establishing contact. Mission briefings are confidential.
+        </p>
+        <p>
+          Classified wallets and portfolio reviews handled under NDA. No screenshots shared without operative consent.
+        </p>
+
+        <div class="contact-channels">
+          <a class="channel-link" href="#">
+            <span class="channel-icon">✉</span>
+            <span class="channel-label">Telegram</span>
+            <span class="channel-handle">@cipher_operative</span>
+          </a>
+          <a class="channel-link" href="#">
+            <span class="channel-icon">◈</span>
+            <span class="channel-label">Discord</span>
+            <span class="channel-handle">cipher#0000</span>
+          </a>
+          <a class="channel-link" href="#">
+            <span class="channel-icon">◆</span>
+            <span class="channel-label">X / Twitter</span>
+            <span class="channel-handle">@CipherProtocol</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="terminal">
+        <div><span class="term-prompt">&gt; </span><span class="term-cmd">init_secure_channel --agent CIPHER-2147</span></div>
+        <div class="term-out">Establishing encrypted tunnel...</div>
+        <div class="term-ok">Connection established. Awaiting operative input.</div>
+        <br>
+        <div><span class="term-prompt">&gt; </span><span class="term-cmd">status --all</span></div>
+        <div class="term-out">OPERATIVE CIPHER: ONLINE ██████████ 100%</div>
+        <div class="term-out">SIGNAL FEED:      LIVE   ██████████ 100%</div>
+        <div class="term-out">CHAIN MONITOR:    ACTIVE ██████████ 100%</div>
+        <div class="term-out">MISSION QUEUE:    OPEN   ████░░░░░░  40%</div>
+        <br>
+        <div><span class="term-prompt">&gt; </span><span class="term-cmd">echo "Ready for mission briefing."</span></div>
+        <div class="term-ok">Ready for mission briefing.</div>
+        <div><span class="term-prompt">&gt; </span><span class="term-cursor"></span></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-ref">DOCUMENT REF: CIPHER-2147-ALPHA // EYES ONLY // BLOCKCHAIN INTELLIGENCE DIV.</div>
+  <div style="color: var(--text-dim);">© 2026 CIPHER PROTOCOL — CLASSIFIED</div>
+</footer>
+
+<script>
+// ── COIN DATA ──
+const COINS = [
+  { sym: 'BTC', name: 'BITCOIN', price: 87432.18, change: 2.41, dir: 'up', fill: 0.82 },
+  { sym: 'ETH', name: 'ETHEREUM', price: 2018.55, change: -1.73, dir: 'dn', fill: 0.61 },
+  { sym: 'SOL', name: 'SOLANA', price: 134.90, change: 5.22, dir: 'up', fill: 0.74 },
+  { sym: 'BNB', name: 'BNB CHAIN', price: 598.34, change: 0.88, dir: 'up', fill: 0.55 },
+  { sym: 'ARB', name: 'ARBITRUM', price: 0.412, change: -3.10, dir: 'dn', fill: 0.33 },
+  { sym: 'AVAX', name: 'AVALANCHE', price: 22.48, change: 1.64, dir: 'up', fill: 0.49 },
+];
+
+// ── MINI SPARKLINE ──
+function sparkline(dir) {
+  const pts = Array.from({length: 10}, (_, i) => ({
+    x: i * 60,
+    y: 40 + (Math.random() - (dir === 'up' ? 0.55 : 0.45)) * 50
+  }));
+  const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+  const color = dir === 'up' ? '#7fff00' : '#ff2244';
+  return `<svg viewBox="0 0 540 60" class="coin-spark"><polyline points="${pts.map(p=>p.x+','+p.y).join(' ')}" stroke="${color}" stroke-width="1.5" fill="none" opacity="0.8"/></svg>`;
+}
+
+// ── RENDER MARKET GRID ──
+const grid = document.getElementById('marketGrid');
+COINS.forEach(c => {
+  const up = c.dir === 'up';
+  grid.innerHTML += `
+    <div class="coin-card">
+      <div class="coin-header">
+        <div>
+          <div class="coin-sym">${c.sym}</div>
+          <div class="coin-name">${c.name}</div>
+        </div>
+        <div class="coin-badge ${up ? 'badge-up' : 'badge-dn'}">${up ? '▲ BULL' : '▼ BEAR'}</div>
+      </div>
+      <div class="coin-price">$${c.price.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:4})}</div>
+      <div class="${up ? 'coin-change-up' : 'coin-change-dn'}">${up ? '+' : ''}${c.change}% (24H)</div>
+      ${sparkline(c.dir)}
+      <div class="coin-bar-wrap"><div class="coin-bar" style="width:${c.fill*100}%;animation-delay:${Math.random()*0.5}s"></div></div>
+    </div>`;
+});
+
+// ── MCAP COUNTER ──
+let mcapVal = 0;
+const mcapTarget = 2.74;
+const mcapEl = document.getElementById('statMcap');
+const mcapInc = mcapTarget / 60;
+const mcapTimer = setInterval(() => {
+  mcapVal = Math.min(mcapVal + mcapInc, mcapTarget);
+  mcapEl.textContent = '$' + mcapVal.toFixed(2) + 'T';
+  if (mcapVal >= mcapTarget) clearInterval(mcapTimer);
+}, 30);
+
+// ── SIGNALS ──
+const SIGNALS = [
+  { asset: 'BTC/USDT', action: 'BUY', entry: '$84,200', target: '$92,000', stop: '$81,500', conf: 87, status: 'OPEN' },
+  { asset: 'ETH/USDT', action: 'HOLD', entry: '$1,980', target: '$2,400', stop: '$1,850', conf: 72, status: 'ACTIVE' },
+  { asset: 'SOL/USDT', action: 'BUY', entry: '$128', target: '$158', stop: '$119', conf: 91, status: 'OPEN' },
+  { asset: 'ARB/USDT', action: 'SELL', entry: '$0.44', target: '$0.32', stop: '$0.48', conf: 68, status: 'ACTIVE' },
+  { asset: 'AVAX/USDT', action: 'BUY', entry: '$21.10', target: '$28.50', stop: '$19.80', conf: 78, status: 'OPEN' },
+];
+
+const sb = document.getElementById('signalBody');
+SIGNALS.forEach(s => {
+  const cls = s.action === 'BUY' ? 'signal-action-buy' : s.action === 'SELL' ? 'signal-action-sell' : 'signal-action-hold';
+  sb.innerHTML += `<tr>
+    <td class="signal-asset">${s.asset}</td>
+    <td class="${cls}">${s.action}</td>
+    <td>${s.entry}</td>
+    <td style="color:var(--accent3)">${s.target}</td>
+    <td style="color:var(--red)">${s.stop}</td>
+    <td>
+      <div class="conf-bar">
+        <div class="conf-fill" style="width:${s.conf}px"></div>
+        <span style="color:var(--accent);font-size:12px">${s.conf}%</span>
+      </div>
+    </td>
+    <td style="color:var(--accent3);font-size:11px;letter-spacing:2px">● ${s.status}</td>
+  </tr>`;
+});
+
+// ── TICKER ──
+const tickerCoins = [...COINS, ...COINS];
+const inner = document.getElementById('tickerInner');
+inner.innerHTML = tickerCoins.map(c => {
+  const up = c.dir === 'up';
+  return `<span class="ticker-item">
+    <span class="ticker-sym">${c.sym}</span>
+    <span class="ticker-price">$${c.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4})}</span>
+    <span class="${up ? 'ticker-up' : 'ticker-down'}">${up ? '+' : ''}${c.change}%</span>
+  </span>`;
+}).join('');
+
+// ── PRICE FLICKER ──
+setInterval(() => {
+  const cards = document.querySelectorAll('.coin-price');
+  const idx = Math.floor(Math.random() * cards.length);
+  cards[idx].style.opacity = '0.5';
+  setTimeout(() => { cards[idx].style.opacity = '1'; }, 120);
+}, 2000);
+</script>
+</body>
+</html>
